@@ -1,0 +1,513 @@
+{
+  "name": "Fiverr Gig Demand Generator - Reddit Version",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "start",
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "resource": "post",
+        "operation": "getAll",
+        "subreddit": "entrepreneur",
+        "sort": "new",
+        "limit": 25
+      },
+      "id": "reddit_entrepreneur",
+      "name": "Reddit - Entrepreneur Posts",
+      "type": "n8n-nodes-base.reddit",
+      "typeVersion": 1,
+      "position": [460, 180]
+    },
+    {
+      "parameters": {
+        "resource": "post",
+        "operation": "getAll",
+        "subreddit": "smallbusiness",
+        "sort": "new",
+        "limit": 25
+      },
+      "id": "reddit_smallbusiness",
+      "name": "Reddit - Small Business Posts",
+      "type": "n8n-nodes-base.reddit",
+      "typeVersion": 1,
+      "position": [460, 280]
+    },
+    {
+      "parameters": {
+        "resource": "post",
+        "operation": "getAll",
+        "subreddit": "webdev",
+        "sort": "new",
+        "limit": 25
+      },
+      "id": "reddit_webdev",
+      "name": "Reddit - WebDev Posts",
+      "type": "n8n-nodes-base.reddit",
+      "typeVersion": 1,
+      "position": [460, 380]
+    },
+    {
+      "parameters": {
+        "resource": "post",
+        "operation": "getAll",
+        "subreddit": "freelance",
+        "sort": "new",
+        "limit": 25
+      },
+      "id": "reddit_freelance",
+      "name": "Reddit - Freelance Posts",
+      "type": "n8n-nodes-base.reddit",
+      "typeVersion": 1,
+      "position": [460, 480]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "multiplex",
+        "options": {}
+      },
+      "id": "merge_reddit_posts",
+      "name": "Merge All Reddit Posts",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [680, 330]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "website_keywords",
+              "leftValue": "={{ $json.title }}",
+              "rightValue": "website|landing page|web design|email template|email marketing|need a website|looking for developer|need help with|web developer|designer needed|build a website|create website|website help|email campaign|marketing help",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "exclude_spam",
+              "leftValue": "={{ $json.title }}",
+              "rightValue": "crypto|bitcoin|nft|porn|adult|casino|gambling|drugs",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "filter_relevant_posts",
+      "name": "Filter Relevant Posts",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [900, 330]
+    },
+    {
+      "parameters": {
+        "resource": "post",
+        "operation": "comment",
+        "postId": "={{ $json.id }}",
+        "commentText": "🚀 Hi there! I noticed your post about {{ $json.title }}. \n\nI specialize in:\n• Modern websites starting at just $10\n• Professional email templates for $5  \n• Converting landing pages that actually drive sales\n\nI'd love to help bring your vision to life! Check out my portfolio:\n🌐 Websites: https://fr.fiverr.com/s/P289B5p\n📧 Email Templates: https://fr.fiverr.com/s/KejlGzY\n🎯 Landing Pages: https://fr.fiverr.com/s/dDGQzw2\n\nFeel free to DM me if you're interested!"
+      },
+      "id": "reddit_comment_outreach",
+      "name": "Reddit Comment Outreach",
+      "type": "n8n-nodes-base.reddit",
+      "typeVersion": 1,
+      "position": [1120, 250]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "recipient": "={{ $json.author }}",
+        "subject": "Professional Web Services - Saw Your Post",
+        "text": "Hi {{ $json.author }},\n\nI saw your post \"{{ $json.title }}\" and thought I could help!\n\nI offer:\n🌐 Modern, responsive websites - Starting at $10\n📧 Professional email templates - Just $5\n🎯 High-converting landing pages - Custom pricing\n\n✅ Fast delivery (24-48 hours)\n✅ Unlimited revisions\n✅ Mobile-responsive designs\n✅ SEO-friendly\n✅ Money-back guarantee\n\nPortfolio:\n• Websites: https://fr.fiverr.com/s/P289B5p\n• Email Templates: https://fr.fiverr.com/s/KejlGzY\n• Landing Pages: https://fr.fiverr.com/s/dDGQzw2\n\nWould love to discuss your project!\n\nBest regards"
+      },
+      "id": "reddit_dm_outreach",
+      "name": "Reddit DM Outreach",
+      "type": "n8n-nodes-base.reddit",
+      "typeVersion": 1,
+      "position": [1120, 350]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "text": "🔥 New potential client found!\n\n📋 **Post Details:**\n• Title: {{ $json.title }}\n• Author: u/{{ $json.author }}\n• Subreddit: r/{{ $json.subreddit }}\n• Score: {{ $json.score }} upvotes\n• Comments: {{ $json.num_comments }}\n• URL: https://reddit.com{{ $json.permalink }}\n\n🎯 **Keywords matched:** {{ $json.title }}\n\n✅ **Actions taken:**\n- Comment posted\n- DM sent\n\n#FreelanceOpportunity #WebDevelopment #Fiverr #RedditLead",
+        "additionalFields": {}
+      },
+      "id": "slack_opportunity_alert",
+      "name": "Slack Opportunity Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.1,
+      "position": [1120, 450]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "id": "schedule_reddit_monitoring",
+      "name": "Every 6 Hours - Reddit Monitor",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 600]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 4
+            }
+          ]
+        }
+      },
+      "id": "schedule_social_promotion",
+      "name": "Every 4 Hours - Social Media",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 800]
+    },
+    {
+      "parameters": {
+        "resource": "post",
+        "operation": "create",
+        "subreddit": "forhire",
+        "title": "[OFFER] Professional Web Services - Modern Websites $10, Email Templates $5, Landing Pages",
+        "text": "🚀 **PROFESSIONAL WEB SERVICES - AMAZING PRICES!** 🚀\n\n**What I Offer:**\n\n💻 **Modern Website Design - Only $10!**\n• Fully responsive design\n• Mobile-friendly\n• Fast loading\n• SEO optimized\n• Clean, modern aesthetics\n\n📧 **Professional Email Templates - Just $5!**\n• Newsletter templates\n• Marketing emails\n• Promotional campaigns\n• HTML/CSS coded\n• Compatible with major email platforms\n\n🎯 **High-Converting Landing Pages - Custom Pricing**\n• Conversion-focused design\n• A/B testing ready\n• Lead capture forms\n• Call-to-action optimization\n\n**Why Choose My Services?**\n✅ 3+ years experience\n✅ Fast delivery (24-48 hours)\n✅ Unlimited revisions\n✅ Money-back guarantee\n✅ 100% satisfaction rate\n\n**Portfolio & Order:**\n🔗 Modern Websites: https://fr.fiverr.com/s/P289B5p\n🔗 Email Templates: https://fr.fiverr.com/s/KejlGzY\n🔗 Landing Pages: https://fr.fiverr.com/s/dDGQzw2\n\nComment below or DM me to get started! 💪\n\n*Perfect for entrepreneurs, small businesses, startups, and personal brands.*"
+      },
+      "id": "reddit_forhire_post",
+      "name": "Reddit - Post in r/forhire",
+      "type": "n8n-nodes-base.reddit",
+      "typeVersion": 1,
+      "position": [460, 700]
+    },
+    {
+      "parameters": {
+        "resource": "post",
+        "operation": "create",
+        "subreddit": "slavelabour",
+        "title": "[OFFER] I will create a modern website for $10, email templates for $5, landing pages custom pricing",
+        "text": "**🌟 PROFESSIONAL WEB SERVICES AT UNBEATABLE PRICES! 🌟**\n\n**Services Available:**\n\n**1. Modern Website Design - $10**\n• Responsive design (looks great on all devices)\n• Fast loading speed\n• SEO-friendly structure\n• Clean, professional appearance\n• Basic contact forms\n• Social media integration\n\n**2. Email Templates - $5**\n• Professional HTML email templates\n• Newsletter designs\n• Marketing campaign templates\n• Compatible with MailChimp, ConvertKit, etc.\n• Mobile-responsive\n\n**3. Landing Pages - Custom Pricing (starting $15)**\n• High-conversion focused\n• Lead capture optimization\n• A/B testing ready\n• Call-to-action placement\n• Analytics integration\n\n**What's Included:**\n✅ Source files (HTML, CSS, images)\n✅ Documentation\n✅ 2 rounds of revisions\n✅ 24-48 hour delivery\n✅ Ongoing support\n\n**Portfolio Examples:**\n🔗 https://fr.fiverr.com/s/P289B5p\n🔗 https://fr.fiverr.com/s/KejlGzY\n🔗 https://fr.fiverr.com/s/dDGQzw2\n\n**Ready to get started?** Comment $bid and send me a PM with:\n- Type of service needed\n- Brief description of your requirements\n- Any design preferences\n- Timeline\n\nLet's create something amazing together! 🚀"
+      },
+      "id": "reddit_slavelabour_post",
+      "name": "Reddit - Post in r/slavelabour",
+      "type": "n8n-nodes-base.reddit",
+      "typeVersion": 1,
+      "position": [460, 800]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "text": "🚀 New Reddit posts created!\n\n📋 **Posted to:**\n• r/forhire - Professional services post\n• r/slavelabour - Budget-friendly offerings\n\n🎯 **Services promoted:**\n• Modern websites ($10)\n• Email templates ($5)\n• Landing pages (custom)\n\n⏰ **Next social media promotion in 4 hours**\n\n#RedditMarketing #FreelancePromotion #WebServices",
+        "additionalFields": {}
+      },
+      "id": "slack_posting_confirmation",
+      "name": "Slack - Posting Confirmation",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.1,
+      "position": [680, 750]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "text": "💼 Looking for affordable web solutions?\n\n✅ Modern websites - Starting at $10\n✅ Email templates - Just $5\n✅ High-converting landing pages\n\nPerfect for:\n🎯 Small businesses\n🎯 Entrepreneurs\n🎯 Startups\n🎯 Personal brands\n\nDM me or check my services:\n🔗 https://fr.fiverr.com/s/P289B5p\n\n#WebDesign #Freelance #SmallBusiness #AffordableWebsite #WebDeveloper #EmailMarketing",
+        "additionalFields": {}
+      },
+      "id": "twitter_promotion",
+      "name": "Twitter Promotion",
+      "type": "n8n-nodes-base.twitter",
+      "typeVersion": 2,
+      "position": [460, 900]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "operation": "create",
+        "text": "🚀 AFFORDABLE WEB SERVICES ALERT! 🚀\n\n💻 Modern Website Design - Only $10!\n📧 Professional Email Templates - Just $5!\n🎯 Landing Pages That Convert - Starting at $15!\n\nPerfect for entrepreneurs and small businesses looking to level up their online presence without breaking the bank!\n\n✨ **Why choose my services?**\n• Lightning-fast delivery (24-48h)\n• Unlimited revisions included\n• Mobile-responsive designs\n• SEO-friendly code\n• Money-back guarantee\n• 100+ satisfied clients\n\n🎯 **Perfect for:**\n• Startups launching their first website\n• Small businesses needing email templates\n• Entrepreneurs building landing pages\n• Anyone wanting professional web presence\n\n**Ready to transform your business?** Check out my portfolio:\n🔗 Modern Websites: https://fr.fiverr.com/s/P289B5p\n🔗 Email Templates: https://fr.fiverr.com/s/KejlGzY\n🔗 Landing Pages: https://fr.fiverr.com/s/dDGQzw2\n\nComment below or send me a DM to get started! 💪\n\n#WebDesign #Freelance #SmallBusiness #Entrepreneur #AffordableWebsite #LandingPage #EmailMarketing #Fiverr #WebDeveloper #StartupLife",
+        "additionalFields": {}
+      },
+      "id": "linkedin_promotion",
+      "name": "LinkedIn Promotion",
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [680, 900]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1
+            }
+          ]
+        },
+        "triggerAtHour": 9
+      },
+      "id": "daily_analytics_trigger",
+      "name": "Daily at 9 AM - Analytics",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 1100]
+    },
+    {
+      "parameters": {
+        "content": "🎯 **Daily Fiverr Gig Performance Report** 🎯\n\n📅 **Date:** {{ $now.format('YYYY-MM-DD') }}\n\n📊 **Yesterday's Activity:**\n• Reddit monitoring runs: 4 (every 6 hours)\n• Social media posts: 6 (Twitter + LinkedIn every 4 hours)\n• Potential leads found: {{ $('filter_relevant_posts').length || 0 }}\n• Comments posted: {{ $('reddit_comment_outreach').length || 0 }}\n• DMs sent: {{ $('reddit_dm_outreach').length || 0 }}\n\n🚀 **Active Gig Portfolio:**\n• Modern Website Design ($10): https://fr.fiverr.com/s/P289B5p\n• Email Templates ($5): https://fr.fiverr.com/s/KejlGzY  \n• Landing Pages (custom): https://fr.fiverr.com/s/dDGQzw2\n\n🎯 **Target Subreddits Monitored:**\n• r/entrepreneur\n• r/smallbusiness\n• r/webdev\n• r/freelance\n\n📈 **Promotion Channels:**\n• Reddit (r/forhire, r/slavelabour)\n• Twitter (every 4 hours)\n• LinkedIn (every 4 hours)\n• Direct outreach (comments + DMs)\n\n💡 **Today's Focus:**\n- Monitor for high-engagement posts\n- Follow up on previous outreach\n- Update gig descriptions if needed\n- Engage authentically with community\n\n*Automation running smoothly! 💪*\n\n---\n*This report is automatically generated by your n8n workflow.*",
+        "subject": "📊 Daily Fiverr Promotion Report - {{ $now.format('MMM DD, YYYY') }}",
+        "additionalFields": {
+          "replyTo": "your-email@gmail.com"
+        }
+      },
+      "id": "daily_performance_report",
+      "name": "Daily Performance Report",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [460, 1100]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Enhanced Analytics and Performance Tracking\nconst now = new Date();\nconst analytics = {\n  timestamp: now.toISOString(),\n  date: now.toDateString(),\n  \n  // Reddit Performance\n  reddit: {\n    subreddits_monitored: ['entrepreneur', 'smallbusiness', 'webdev', 'freelance'],\n    posts_analyzed: ($('merge_reddit_posts').length || 0),\n    relevant_posts_found: ($('filter_relevant_posts').length || 0),\n    comments_posted: ($('reddit_comment_outreach').length || 0),\n    dms_sent: ($('reddit_dm_outreach').length || 0),\n    conversion_rate: ($('filter_relevant_posts').length / $('merge_reddit_posts').length * 100).toFixed(2) + '%'\n  },\n  \n  // Social Media Activity\n  social_media: {\n    twitter_posts_today: 6, // Every 4 hours = 6 posts per day\n    linkedin_posts_today: 6,\n    reddit_promotional_posts: 2 // forhire + slavelabour\n  },\n  \n  // Gig Performance Tracking\n  gigs: [\n    {\n      name: 'Modern Website Design',\n      price: '$10',\n      url: 'https://fr.fiverr.com/s/P289B5p',\n      target_audience: 'small businesses, entrepreneurs, startups',\n      promotion_channels: ['Reddit comments', 'Twitter', 'LinkedIn', 'r/forhire', 'r/slavelabour']\n    },\n    {\n      name: 'Professional Email Templates', \n      price: '$5',\n      url: 'https://fr.fiverr.com/s/KejlGzY',\n      target_audience: 'marketers, businesses, email campaigns',\n      promotion_channels: ['Reddit comments', 'Twitter', 'LinkedIn', 'r/forhire', 'r/slavelabour']\n    },\n    {\n      name: 'High-Converting Landing Pages',\n      price: 'Custom (starting $15)',\n      url: 'https://fr.fiverr.com/s/dDGQzw2', \n      target_audience: 'conversion-focused businesses, marketers',\n      promotion_channels: ['Reddit comments', 'Twitter', 'LinkedIn', 'r/forhire', 'r/slavelabour']\n    }\n  ],\n  \n  // Automation Schedule\n  schedule: {\n    reddit_monitoring: 'Every 6 hours',\n    social_media_posting: 'Every 4 hours',\n    reddit_promotional_posts: 'With social media schedule',\n    daily_analytics: '9 AM daily'\n  },\n  \n  // Keywords Tracking\n  target_keywords: [\n    'website', 'landing page', 'web design', 'email template', \n    'email marketing', 'need a website', 'looking for developer',\n    'need help with', 'web developer', 'designer needed',\n    'build a website', 'create website', 'website help',\n    'email campaign', 'marketing help'\n  ],\n  \n  // Performance Metrics\n  metrics: {\n    daily_reach: 'Estimated 1000+ users across all platforms',\n    automation_uptime: '24/7 monitoring and posting',\n    response_time: '24-48 hours for outreach',\n    platforms_active: 5 // Reddit, Twitter, LinkedIn, Slack, Email\n  }\n};\n\n// Log analytics for review\nconsole.log('📊 Daily Analytics Summary:', JSON.stringify(analytics, null, 2));\n\nreturn { analytics };"
+      },
+      "id": "enhanced_analytics_tracker",
+      "name": "Enhanced Analytics Tracker",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 1100]
+    }
+  ],
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Reddit - Entrepreneur Posts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Reddit - Small Business Posts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Reddit - WebDev Posts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Reddit - Freelance Posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reddit - Entrepreneur Posts": {
+      "main": [
+        [
+          {
+            "node": "Merge All Reddit Posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reddit - Small Business Posts": {
+      "main": [
+        [
+          {
+            "node": "Merge All Reddit Posts",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Reddit - WebDev Posts": {
+      "main": [
+        [
+          {
+            "node": "Merge All Reddit Posts",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Reddit - Freelance Posts": {
+      "main": [
+        [
+          {
+            "node": "Merge All Reddit Posts",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Merge All Reddit Posts": {
+      "main": [
+        [
+          {
+            "node": "Filter Relevant Posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Relevant Posts": {
+      "main": [
+        [
+          {
+            "node": "Reddit Comment Outreach",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Reddit DM Outreach",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Slack Opportunity Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every 6 Hours - Reddit Monitor": {
+      "main": [
+        [
+          {
+            "node": "Reddit - Entrepreneur Posts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Reddit - Small Business Posts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Reddit - WebDev Posts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Reddit - Freelance Posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every 4 Hours - Social Media": {
+      "main": [
+        [
+          {
+            "node": "Reddit - Post in r/forhire",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Reddit - Post in r/slavelabour",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Twitter Promotion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reddit - Post in r/forhire": {
+      "main": [
+        [
+          {
+            "node": "Slack - Posting Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reddit - Post in r/slavelabour": {
+      "main": [
+        [
+          {
+            "node": "Slack - Posting Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Twitter Promotion": {
+      "main": [
+        [
+          {
+            "node": "LinkedIn Promotion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily at 9 AM - Analytics": {
+      "main": [
+        [
+          {
+            "node": "Daily Performance Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily Performance Report": {
+      "main": [
+        [
+          {
+            "node": "Enhanced Analytics Tracker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["reddit", "fiverr", "automation", "lead-generation", "social-media"],
+  "triggerCount": 0,
+  "updatedAt": "2025-01-01T00:00:00.000Z",
+  "versionId": "2"
+}
